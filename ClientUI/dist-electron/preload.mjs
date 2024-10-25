@@ -1,5 +1,9 @@
 "use strict";
 const electron = require("electron");
+electron.contextBridge.exposeInMainWorld("electronAPI", {
+  getEnv: (name) => electron.ipcRenderer.invoke("get-env", name),
+  showMessage: (message) => electron.ipcRenderer.send("show-message", message)
+});
 electron.contextBridge.exposeInMainWorld("ipcRenderer", {
   on(...args) {
     const [channel, listener] = args;

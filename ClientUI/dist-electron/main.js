@@ -1,9 +1,21 @@
-import { app, BrowserWindow } from "electron";
+import { ipcMain, app, BrowserWindow } from "electron";
 import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
-createRequire(import.meta.url);
+const require2 = createRequire(import.meta.url);
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+ipcMain.handle("get-env", (event, name) => {
+  return process.env[name];
+});
+ipcMain.on("show-message", (event, message) => {
+  if (win) {
+    const { dialog } = require2("electron");
+    dialog.showMessageBox(win, {
+      type: "info",
+      message
+    });
+  }
+});
 process.env.APP_ROOT = path.join(__dirname, "..");
 const VITE_DEV_SERVER_URL = process.env["VITE_DEV_SERVER_URL"];
 const MAIN_DIST = path.join(process.env.APP_ROOT, "dist-electron");
@@ -14,7 +26,10 @@ function createWindow() {
   win = new BrowserWindow({
     icon: path.join(process.env.VITE_PUBLIC, "electron-vite.svg"),
     webPreferences: {
-      preload: path.join(__dirname, "preload.mjs")
+      preload: path.join(__dirname, "preload.mjs"),
+      nodeIntegration: false,
+      contextIsolation: true
+      // Add this for security
     }
   });
   win.webContents.on("did-finish-load", () => {

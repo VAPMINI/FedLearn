@@ -9,9 +9,9 @@ const ProjectSchema = new mongoose.Schema({
   creationDate: { type: Date, default: Date.now },
   uuid: { type: String, default: uuidv4, unique: true },
   isPrivate: { type: Boolean, default: false },
-  accuracy: { type: Number, default: 0 }
+  accuracy: { type: Number, default: 0 },
+  contributions: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Contribution' }]
 });
 
 const Project = mongoose.model('Project', ProjectSchema);
-
 module.exports = Project;
