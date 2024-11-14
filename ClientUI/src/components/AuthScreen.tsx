@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios, { AxiosError } from 'axios';
+import CONFIG from "../config/config"
 
 interface FormData {
   name: string;
@@ -8,31 +9,17 @@ interface FormData {
   password: string;
 }
 
-const AuthComponent: React.FC = () => {
+
+const AuthComponent: React.FC = ( {setToken}) => {
   const [isSignup, setIsSignup] = useState<boolean>(true);
-  const [backendUrl, setBackendUrl] = useState<string>('');
+  const [backendUrl, setBackendUrl] = useState<string>(CONFIG.BACKEND_URI);
   const [formData, setFormData] = useState<FormData>({
     name: '',
     username: '',
     email: '',
     password: ''
   });
-
-  // Fetch backend URL on component mount
-  useEffect(() => {
-    const fetchBackendUrl = async () => {
-      try {
-        const url = await window.electronAPI.getEnv('VITE_BACKEND_URI');
-        console.log('Backend URL:', url); // Debug log
-        setBackendUrl(url);
-      } catch (error) {
-        console.error('Failed to get BACKEND_URI:', error);
-      }
-    };
-
-    fetchBackendUrl();
-  }, []);
-
+  
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prevData) => ({ ...prevData, [name]: value }));
@@ -56,6 +43,8 @@ const AuthComponent: React.FC = () => {
       const response = await axios.post(`${backendUrl}${endpoint}`, payload);
       if (!isSignup) {
         localStorage.setItem('token', response.data.token);
+        setToken(response.data.token)
+        
       }
       alert(`Successfully ${isSignup ? 'signed up' : 'logged in'}!`);
     } catch (error) {

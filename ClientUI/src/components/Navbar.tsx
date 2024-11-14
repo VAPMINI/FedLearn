@@ -1,7 +1,14 @@
 import React from 'react';
 import { FaUserCircle, FaSignOutAlt } from 'react-icons/fa';
 
-const Navbar: React.FC = () => {
+const Navbar: React.FC = ( {setToken} ) => {
+
+
+    const signOut = ()=>{
+        localStorage.setItem('token','') 
+        setToken("")
+    }
+
     return (
         <nav className="flex justify-between items-center p-4 bg-base-300 text-base-content">
             <div className="text-2xl font-bold">FedLearn</div>
@@ -9,7 +16,7 @@ const Navbar: React.FC = () => {
                 <button className="btn btn-primary">
                     <FaUserCircle /> Account
                 </button>
-                <button className="btn btn-secondary">
+                <button className="btn btn-secondary" onClick={signOut}>
                     <FaSignOutAlt /> Sign Out
                 </button>
             </div>
