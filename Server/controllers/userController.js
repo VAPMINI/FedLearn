@@ -25,10 +25,10 @@ export const signup = async (req, res) => {
 };
 
 export const login = async (req, res) => {
-  const { username, password } = req.body;
+  const { email, password } = req.body;
 
   try {
-    const user = await User.findOne({ username });
+    const user = await User.findOne({ email });
     if (!user) {
       return res.status(400).json({ error: 'Invalid credentials' });
     }
@@ -38,10 +38,24 @@ export const login = async (req, res) => {
       return res.status(400).json({ error: 'Invalid credentials' });
     }
 
-    const token = jwt.sign({ id: user._id, username: user.username }, JWT_SECRET, { expiresIn: '1h' });
+    const token = jwt.sign({ id: user._id, email: user.email }, JWT_SECRET, { expiresIn: '20h' });
 
     res.status(200).json({ message: 'Login successful', token });
   } catch (error) {
     res.status(500).json({ error: 'Login failed', details: error.message });
+  }
+};
+
+export const fuzzyFindUsernames = async (req, res) => {
+  const { query } = req.params;
+
+  try {
+    const regex = new RegExp(query, 'i'); // 'i' for case-insensitive
+    const users = await User.find({ username: { $regex: regex } }).select('username -_id');
+    const usernames = users.map(user => user.username);
+
+    res.status(200).json({ usernames });
+  } catch (error) {
+    res.status(500).json({ error: 'Error fetching usernames', details: error.message });
   }
 };

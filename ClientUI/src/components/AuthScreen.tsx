@@ -11,7 +11,7 @@ interface FormData {
 
 
 const AuthComponent: React.FC = ( {setToken}) => {
-  const [isSignup, setIsSignup] = useState<boolean>(true);
+  const [isSignup, setIsSignup] = useState<boolean>(false);
   const [backendUrl, setBackendUrl] = useState<string>(CONFIG.BACKEND_URI);
   const [formData, setFormData] = useState<FormData>({
     name: '',

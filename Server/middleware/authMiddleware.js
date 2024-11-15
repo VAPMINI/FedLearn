@@ -11,7 +11,7 @@ const authMiddleware = (req, res, next) => {
         if (err) {
             return res.status(401).json({ message: 'Unauthorized.' });
         }
-        req.username = decoded.username;
+        req.email = decoded.email;
         next();
     });
 };

@@ -1,26 +1,165 @@
-import React, { useState } from 'react';
-import { FaUser, FaHistory, FaCog, FaBell, FaLock, FaUserCog, FaChartLine, FaUsers, FaClipboardList } from 'react-icons/fa';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import { FaUser, FaHistory, FaCog, FaLock, FaUserCog, FaChartLine, FaUsers, FaClipboardList, FaExclamationCircle, FaArrowLeft, FaPlus, FaEdit } from 'react-icons/fa';
+import CONFIG from '../config/config';
 
 interface Contributor {
   username: string;
   profileLink: string;
+  isOwner?: boolean;
 }
 
-export default function Dashboard() {
-  // Sample data for the project
-  const [projectName] = useState('My Awesome Project');
-  const [collaboratorsCount] = useState(5);
-  const [modelAccuracy] = useState('85%');
-  const [description] = useState('This is a brief description of the project.');
-  const [history] = useState<Contributor[]>([
-    { username: 'Alice', profileLink: '#' },
-    { username: 'Bob', profileLink: '#' },
-    { username: 'Charlie', profileLink: '#' },
-  ]);
-  const [currentContributors] = useState<Contributor[]>([
-    { username: 'Alice', profileLink: '#' },
-    { username: 'Bob', profileLink: '#' },
-  ]);
+interface DashboardProps {
+  token: string;
+  currentProject: string;
+  setCurrentProject: (projectUuid: string) => void;
+}
+
+const Dashboard: React.FC<DashboardProps> = ({ token, currentProject, setCurrentProject }) => {
+  const [projectName, setProjectName] = useState('');
+  const [collaboratorsCount, setCollaboratorsCount] = useState(0);
+  const [modelAccuracy, setModelAccuracy] = useState('');
+  const [description, setDescription] = useState('');
+  const [history, setHistory] = useState<Contributor[]>([]);
+  const [currentContributors, setCurrentContributors] = useState<Contributor[]>([]);
+  const [isAddContributorModalOpen, setIsAddContributorModalOpen] = useState(false);
+  const [isEditProjectModalOpen, setIsEditProjectModalOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<Contributor[]>([]);
+  const [newContributor, setNewContributor] = useState('');
+  const [editProjectDetails, setEditProjectDetails] = useState({
+    name: '',
+    description: '',
+    activation_function: '',
+    dropout_rate: '',
+    combining_method: '',
+    input_shape: '',
+    num_layers: '',
+    units_per_layer: ''
+  });
+
+  useEffect(() => {
+    const fetchProjects = async () => {
+      try {
+        const response = await axios.get(`${CONFIG.BACKEND_URI}/project`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const projects = response.data.projects || [];
+        const projectData = projects.find(project => project.uuid === currentProject);
+
+        if (projectData) {
+          setProjectName(projectData.name || 'No Project Name');
+          setCollaboratorsCount((projectData.collaborators && projectData.collaborators.length) || 0);
+          setModelAccuracy(projectData.accuracy || 'N/A');
+          setDescription(projectData.description || 'No Description Available');
+          setHistory((projectData.contributions || []).map(contribution => ({
+            username: contribution.user.username || 'Unknown User',
+            profileLink: `/users/${contribution.user._id || '#'}`
+          })));
+          setCurrentContributors([
+            {
+              username: projectData.owner.username || 'Unknown User',
+              profileLink: `/users/${projectData.owner._id || '#'}`,
+              isOwner: true
+            },
+            ...(projectData.collaborators || []).map(collaborator => ({
+              username: collaborator.username || 'Unknown User',
+              profileLink: `/users/${collaborator._id || '#'}`
+            }))
+          ]);
+          setEditProjectDetails({
+            name: projectData.name,
+            description: projectData.description,
+            activation_function: projectData.activation_function,
+            dropout_rate: projectData.dropout_rate,
+            combining_method: projectData.combining_method,
+            input_shape: projectData.input_shape,
+            num_layers: projectData.num_layers,
+            units_per_layer: projectData.units_per_layer
+          });
+        }
+      } catch (error) {
+        console.error('Error fetching project data:', error);
+      }
+    };
+
+    fetchProjects();
+  }, [currentProject, token]);
+
+  const handleSearch = async () => {
+    try {
+      const response = await axios.get(`${CONFIG.BACKEND_URI}/project/search/${searchQuery}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setSearchResults(response.data.usernames.map(username => ({ username, profileLink: `/users/${username}` })));
+    } catch (error) {
+      console.error('Error searching for users:', error);
+    }
+  };
+
+  const handleAddContributor = async (username: string) => {
+    try {
+      await axios.post(`${CONFIG.BACKEND_URI}/project/${projectName}/collaborators`, { username, projectName }, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setIsAddContributorModalOpen(false);
+      setSearchQuery('');
+      setSearchResults([]);
+      setNewContributor('');
+      // Refresh project data
+      const response = await axios.get(`${CONFIG.BACKEND_URI}/project`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const projects = response.data.projects || [];
+      const projectData = projects.find(project => project.uuid === currentProject);
+      if (projectData) {
+        setCurrentContributors([
+          {
+            username: projectData.owner.username || 'Unknown User',
+            profileLink: `/users/${projectData.owner._id || '#'}`,
+            isOwner: true
+          },
+          ...(projectData.collaborators || []).map(collaborator => ({
+            username: collaborator.username || 'Unknown User',
+            profileLink: `/users/${collaborator._id || '#'}`
+          }))
+        ]);
+      }
+    } catch (error) {
+      console.error('Error adding contributor:', error);
+    }
+  };
+
+  const handleEditProject = async () => {
+    try {
+      await axios.put(`${CONFIG.BACKEND_URI}/project/${currentProject}`, editProjectDetails, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setIsEditProjectModalOpen(false);
+      // Refresh project data
+      const response = await axios.get(`${CONFIG.BACKEND_URI}/project`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const projects = response.data.projects || [];
+      const projectData = projects.find(project => project.uuid === currentProject);
+      if (projectData) {
+        setProjectName(projectData.name || 'No Project Name');
+        setDescription(projectData.description || 'No Description Available');
+        setEditProjectDetails({
+          name: projectData.name,
+          description: projectData.description,
+          activation_function: projectData.activation_function,
+          dropout_rate: projectData.dropout_rate,
+          combining_method: projectData.combining_method,
+          input_shape: projectData.input_shape,
+          num_layers: projectData.num_layers,
+          units_per_layer: projectData.units_per_layer
+        });
+      }
+    } catch (error) {
+      console.error('Error updating project:', error);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-base-200 p-4">
@@ -29,11 +168,8 @@ export default function Dashboard() {
           <h1 className="text-2xl font-bold px-4">{projectName}</h1>
         </div>
         <div className="flex-none">
-          <button className="btn btn-ghost btn-circle">
-            <div className="indicator">
-              <FaBell className="h-5 w-5" />
-              <span className="badge badge-xs badge-primary indicator-item"></span>
-            </div>
+          <button className="btn btn-ghost btn-circle" onClick={() => setCurrentProject('')}>
+            <FaArrowLeft className="h-5 w-5" />
           </button>
         </div>
       </div>
@@ -78,15 +214,32 @@ export default function Dashboard() {
           <div className="card-body">
             <h2 className="card-title">Current Contributors</h2>
             <ul className="menu bg-base-200 rounded-box">
-              {currentContributors.map((contributor, index) => (
-                <li key={index}>
-                  <a href={contributor.profileLink} className="flex items-center">
-                    <FaUser className="mr-2" />
-                    {contributor.username}
-                  </a>
+              {currentContributors.length > 0 ? (
+                currentContributors.map((contributor, index) => (
+                  <li key={index}>
+                    <a href={contributor.profileLink} className="flex items-center">
+                      <FaUser className="mr-2" />
+                      {contributor.username} {contributor.isOwner && '(Owner)'}
+                    </a>
+                  </li>
+                ))
+              ) : (
+                <li className="flex items-center">
+                  <FaExclamationCircle className="mr-2" />
+                  No Contributors Available
                 </li>
-              ))}
+              )}
             </ul>
+            <button className="btn btn-primary mt-4" onClick={() => setIsAddContributorModalOpen(true)}>
+              <FaPlus className="mr-2" />
+              Add Contributor
+            </button>
+            {currentContributors.some(contributor => contributor.isOwner) && (
+              <button className="btn btn-secondary mt-4" onClick={() => setIsEditProjectModalOpen(true)}>
+                <FaEdit className="mr-2" />
+                Edit Project
+              </button>
+            )}
           </div>
         </div>
 
@@ -98,48 +251,175 @@ export default function Dashboard() {
               History
             </h2>
             <ul className="menu bg-base-200 rounded-box">
-              {history.map((contributor, index) => (
-                <li key={index}>
-                  <a href={contributor.profileLink} className="flex items-center">
-                    <FaUser className="mr-2" />
-                    {contributor.username}
-                  </a>
+              {history.length > 0 ? (
+                history.map((contributor, index) => (
+                  <li key={index}>
+                    <a href={contributor.profileLink} className="flex items-center">
+                      <FaUser className="mr-2" />
+                      {contributor.username}
+                    </a>
+                  </li>
+                ))
+              ) : (
+                <li className="flex items-center">
+                  <FaExclamationCircle className="mr-2" />
+                  No History Available
                 </li>
-              ))}
-            </ul>
-          </div>
-        </div>
-
-        {/* Settings */}
-        <div className="card bg-base-100 shadow-xl">
-          <div className="card-body">
-            <h2 className="card-title">
-              <FaCog className="mr-2" />
-              Settings
-            </h2>
-            <ul className="menu bg-base-200 rounded-box">
-              <li>
-                <a>
-                  <FaBell className="mr-2" />
-                  Manage Notifications
-                </a>
-              </li>
-              <li>
-                <a>
-                  <FaLock className="mr-2" />
-                  Change Password
-                </a>
-              </li>
-              <li>
-                <a>
-                  <FaUserCog className="mr-2" />
-                  Account Settings
-                </a>
-              </li>
+              )}
             </ul>
           </div>
         </div>
       </div>
+
+      {/* Add Contributor Modal */}
+      {isAddContributorModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+          <div className="bg-base-100 p-6 rounded-lg shadow-xl w-96">
+            <h3 className="text-2xl font-semibold mb-4">Add Contributor</h3>
+            <div className="mb-4">
+              <label className="block mb-2">Search Username</label>
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="input input-bordered w-full"
+                placeholder="Search Username"
+              />
+              <button className="btn btn-primary mt-2" onClick={handleSearch}>
+                Search
+              </button>
+            </div>
+            <ul className="menu bg-base-200 rounded-box">
+              {searchResults.length > 0 ? (
+                searchResults.map((result, index) => (
+                  <li key={index}>
+                    <a className="flex items-center" onClick={() => handleAddContributor(result.username)}>
+                      <FaUser className="mr-2" />
+                      {result.username}
+                    </a>
+                  </li>
+                ))
+              ) : (
+                <li className="flex items-center">
+                  <FaExclamationCircle className="mr-2" />
+                  No Users Found
+                </li>
+              )}
+            </ul>
+            <div className="flex justify-end mt-4">
+              <button className="btn btn-secondary mr-2" onClick={() => setIsAddContributorModalOpen(false)}>
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Project Modal */}
+      {isEditProjectModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+          <div className="bg-base-100 p-6 rounded-lg shadow-xl w-96">
+            <h3 className="text-2xl font-semibold mb-4">Edit Project</h3>
+            <div className="mb-4">
+              <label className="block mb-2">Project Name</label>
+              <input
+                type="text"
+                name="name"
+                value={editProjectDetails.name}
+                onChange={(e) => setEditProjectDetails({ ...editProjectDetails, name: e.target.value })}
+                className="input input-bordered w-full"
+                placeholder="Project Name"
+              />
+            </div>
+            <div className="mb-4">
+              <label className="block mb-2">Description</label>
+              <textarea
+                name="description"
+                value={editProjectDetails.description}
+                onChange={(e) => setEditProjectDetails({ ...editProjectDetails, description: e.target.value })}
+                className="input input-bordered w-full"
+                placeholder="Project Description"
+              />
+            </div>
+            <div className="mb-4">
+              <label className="block mb-2">Activation Function</label>
+              <input
+                type="text"
+                name="activation_function"
+                value={editProjectDetails.activation_function}
+                onChange={(e) => setEditProjectDetails({ ...editProjectDetails, activation_function: e.target.value })}
+                className="input input-bordered w-full"
+                placeholder="Activation Function"
+              />
+            </div>
+            <div className="mb-4">
+              <label className="block mb-2">Dropout Rate</label>
+              <input
+                type="text"
+                name="dropout_rate"
+                value={editProjectDetails.dropout_rate}
+                onChange={(e) => setEditProjectDetails({ ...editProjectDetails, dropout_rate: e.target.value })}
+                className="input input-bordered w-full"
+                placeholder="Dropout Rate"
+              />
+            </div>
+            <div className="mb-4">
+              <label className="block mb-2">Combining Method</label>
+              <input
+                type="text"
+                name="combining_method"
+                value={editProjectDetails.combining_method}
+                onChange={(e) => setEditProjectDetails({ ...editProjectDetails, combining_method: e.target.value })}
+                className="input input-bordered w-full"
+                placeholder="Combining Method"
+              />
+            </div>
+            <div className="mb-4">
+              <label className="block mb-2">Input Shape</label>
+              <input
+                type="text"
+                name="input_shape"
+                value={editProjectDetails.input_shape}
+                onChange={(e) => setEditProjectDetails({ ...editProjectDetails, input_shape: e.target.value })}
+                className="input input-bordered w-full"
+                placeholder="Input Shape"
+              />
+            </div>
+            <div className="mb-4">
+              <label className="block mb-2">Number of Layers</label>
+              <input
+                type="text"
+                name="num_layers"
+                value={editProjectDetails.num_layers}
+                onChange={(e) => setEditProjectDetails({ ...editProjectDetails, num_layers: e.target.value })}
+                className="input input-bordered w-full"
+                placeholder="Number of Layers"
+              />
+            </div>
+            <div className="mb-4">
+              <label className="block mb-2">Units per Layer</label>
+              <input
+                type="text"
+                name="units_per_layer"
+                value={editProjectDetails.units_per_layer}
+                onChange={(e) => setEditProjectDetails({ ...editProjectDetails, units_per_layer: e.target.value })}
+                className="input input-bordered w-full"
+                placeholder="Units per Layer"
+              />
+            </div>
+            <div className="flex justify-end mt-4">
+              <button className="btn btn-secondary mr-2" onClick={() => setIsEditProjectModalOpen(false)}>
+                Cancel
+              </button>
+              <button className="btn btn-primary" onClick={handleEditProject}>
+                Save Changes
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
-}
+};
+
+export default Dashboard;

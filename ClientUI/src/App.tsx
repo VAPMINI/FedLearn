@@ -1,13 +1,12 @@
-import './App.css'
-import Navbar from './components/Navbar'
-import ProjectList from './components/ProjectList'
-import Dashboard from './components/Dashboard'
-import AuthComponent  from './components/AuthScreen'
-import { useState, useEffect } from 'react'
-
+import Dashboard from './components/Dashboard';
+import AuthComponent from './components/AuthScreen';
+import ProjectList from './components/ProjectList';
+import Navbar from './components/Navbar';
+import { useState, useEffect } from 'react';
 
 function App() {
   const [token, setToken] = useState<string | null>(null);
+  const [currentProject, setCurrentProject] = useState<string>('');
 
   useEffect(() => {
     const storedToken = localStorage.getItem('token');
@@ -19,15 +18,17 @@ function App() {
       {token ? (
         <>
           <Navbar setToken={setToken} />
-          {/* <Dashboard /> */}
-          <ProjectList token={token} />
+          {currentProject ? (
+            <Dashboard token={token} currentProject={currentProject} setCurrentProject={setCurrentProject} />
+          ) : (
+            <ProjectList token={token} setCurrentProject={setCurrentProject} />
+          )}
         </>
       ) : (
-        <AuthComponent setToken={setToken}  />
+        <AuthComponent setToken={setToken} />
       )}
     </>
   );
 }
 
-
-export default App
+export default App;

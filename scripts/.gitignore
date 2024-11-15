@@ -1,0 +1,5 @@
+.venv
+client/projects
+client/training_data
+server/users
+server/config.txt

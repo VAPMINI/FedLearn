@@ -11,7 +11,6 @@ db()
 const authRoutes = require('./routes/authRoutes')
 const projectRoutes = require('./routes/projectRoutes')
 
-
 app.use('/auth',authRoutes)
 app.use('/project',projectRoutes)
 

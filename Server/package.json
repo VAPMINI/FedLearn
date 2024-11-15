@@ -5,7 +5,7 @@
   },
   "peerDependencies": {},
   "scripts": {
-    "dev": "bun run index.js"
+    "dev": "bun --hot run index.js "
   },
   "dependencies": {
     "axios": "^1.7.7",

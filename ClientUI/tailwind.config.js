@@ -13,3 +13,5 @@ export default {
     themes: ["dim"],
   },
 }
+
+// dim
