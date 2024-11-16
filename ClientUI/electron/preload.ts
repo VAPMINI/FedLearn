@@ -4,7 +4,10 @@ import { ipcRenderer, contextBridge } from 'electron'
 // the ipcRenderer without exposing the entire object
 contextBridge.exposeInMainWorld('electronAPI', {
   getEnv: (name) => ipcRenderer.invoke('get-env', name),
-  showMessage: (message) => ipcRenderer.send('show-message', message)
+  showMessage: (message) => ipcRenderer.send('show-message', message),
+  contribute: (projectName, epochs, zipFilePath) => ipcRenderer.invoke('contribute', projectName, epochs, zipFilePath),
+  onConsoleOutput: (callback) => ipcRenderer.on('console-output', (_, data) => callback(data)),
+
 })
 // --------- Expose some API to the Renderer process ---------
 contextBridge.exposeInMainWorld('ipcRenderer', {

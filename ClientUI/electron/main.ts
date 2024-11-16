@@ -22,6 +22,8 @@ ipcMain.on('show-message', (event, message) => {
   }
 });
 
+
+
 // The built directory structure
 //
 // ├─┬─┬ dist
@@ -48,8 +50,9 @@ function createWindow() {
     icon: path.join(process.env.VITE_PUBLIC, 'electron-vite.svg'),
     webPreferences: {
       preload: path.join(__dirname, 'preload.mjs'),
-      nodeIntegration: false,
-      contextIsolation: true,  // Add this for security
+      nodeIntegration: false,       // Enable Node.js integration
+      contextIsolation: true     // Disable context isolation
+
     },
   })
 
@@ -67,6 +70,7 @@ function createWindow() {
     win.loadFile(path.join(RENDERER_DIST, 'index.html'))
   }
 }
+
 
 // Quit when all windows are closed, except on macOS. There, it's common
 // for applications and their menu bar to stay active until the user quits

@@ -1,17 +1,15 @@
-import Dashboard from './components/Dashboard';
-import AuthComponent from './components/AuthScreen';
-import ProjectList from './components/ProjectList';
+import React, { useState } from 'react';
 import Navbar from './components/Navbar';
-import { useState, useEffect } from 'react';
+import Dashboard from './components/Dashboard';
+import ProjectList from './components/ProjectList';
+import AuthComponent from './components/AuthScreen';
+import Contrib from './components/Contrib';
+import { Project } from './types';
 
 function App() {
-  const [token, setToken] = useState<string | null>(null);
-  const [currentProject, setCurrentProject] = useState<string>('');
-
-  useEffect(() => {
-    const storedToken = localStorage.getItem('token');
-    setToken(storedToken);
-  }, []);
+  const [token, setToken] = useState<string | null>(localStorage.getItem("token"));
+  const [currentProject, setCurrentProject] = useState<Project | null>(null);
+  const [contribScreen, setContribScreen] = useState<boolean>(false);
 
   return (
     <>
@@ -19,7 +17,20 @@ function App() {
         <>
           <Navbar setToken={setToken} />
           {currentProject ? (
-            <Dashboard token={token} currentProject={currentProject} setCurrentProject={setCurrentProject} />
+            contribScreen ? (
+              <Contrib
+                token={token}
+                currentProject={currentProject}
+                setCurrentProject={setCurrentProject}
+              />
+            ) : (
+              <Dashboard
+                token={token}
+                currentProject={currentProject}
+                setCurrentProject={setCurrentProject}
+                setContribScreen={setContribScreen}
+              />
+            )
           ) : (
             <ProjectList token={token} setCurrentProject={setCurrentProject} />
           )}

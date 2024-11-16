@@ -77,6 +77,7 @@ const ProjectList: React.FC<ProjectListProps> = ({ token, setCurrentProject }) =
     input_shape: '',
     num_layers: '',
     units_per_layer: '',
+    num_classes: ''
   });
 
   useEffect(() => {
@@ -123,6 +124,7 @@ const ProjectList: React.FC<ProjectListProps> = ({ token, setCurrentProject }) =
         input_shape: '',
         num_layers: '',
         units_per_layer: '',
+        num_classes: ''
       });
       setError(null);
     } catch (err) {
@@ -206,7 +208,83 @@ const ProjectList: React.FC<ProjectListProps> = ({ token, setCurrentProject }) =
                 placeholder="Project Description"
               />
             </div>
-            {/* Additional project fields can be added here */}
+            <div className="mb-4">
+              <label className="block mb-2">Activation Function</label>
+              <input
+                type="text"
+                name="activation_function"
+                value={newProject.activation_function}
+                onChange={handleChange}
+                className="input input-bordered w-full"
+                placeholder="Activation Function"
+              />
+            </div>
+            <div className="mb-4">
+              <label className="block mb-2">Dropout Rate</label>
+              <input
+                type="text"
+                name="dropout_rate"
+                value={newProject.dropout_rate}
+                onChange={handleChange}
+                className="input input-bordered w-full"
+                placeholder="Dropout Rate"
+              />
+            </div>
+            <div className="mb-4">
+              <label className="block mb-2">Combining Method</label>
+              <input
+                type="text"
+                name="combining_method"
+                value={newProject.combining_method}
+                onChange={handleChange}
+                className="input input-bordered w-full"
+                placeholder="Combining Method"
+              />
+            </div>
+            <div className="mb-4">
+              <label className="block mb-2">Input Shape</label>
+              <input
+                type="text"
+                name="input_shape"
+                value={newProject.input_shape}
+                onChange={handleChange}
+                className="input input-bordered w-full"
+                placeholder="Input Shape"
+              />
+            </div>
+            <div className="mb-4">
+              <label className="block mb-2">Number of Layers</label>
+              <input
+                type="text"
+                name="num_layers"
+                value={newProject.num_layers}
+                onChange={handleChange}
+                className="input input-bordered w-full"
+                placeholder="Number of Layers"
+              />
+            </div>
+            <div className="mb-4">
+              <label className="block mb-2">Units per Layer</label>
+              <input
+                type="text"
+                name="units_per_layer"
+                value={newProject.units_per_layer}
+                onChange={handleChange}
+                className="input input-bordered w-full"
+                placeholder="Units per Layer"
+              />
+            </div>
+            <div className="mb-4">
+              <label className="block mb-2">Number of Classes</label>
+              <input
+                type="text"
+                name="num_classes"
+                value={newProject.num_classes}
+                onChange={handleChange}
+                className="input input-bordered w-full"
+                placeholder="Number of Classes"
+              />
+            </div>
             <div className="mb-4 flex items-center">
               <input
                 type="checkbox"

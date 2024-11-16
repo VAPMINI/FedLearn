@@ -2,7 +2,9 @@
 const electron = require("electron");
 electron.contextBridge.exposeInMainWorld("electronAPI", {
   getEnv: (name) => electron.ipcRenderer.invoke("get-env", name),
-  showMessage: (message) => electron.ipcRenderer.send("show-message", message)
+  showMessage: (message) => electron.ipcRenderer.send("show-message", message),
+  contribute: (projectName, epochs, zipFilePath) => electron.ipcRenderer.invoke("contribute", projectName, epochs, zipFilePath),
+  onConsoleOutput: (callback) => electron.ipcRenderer.on("console-output", (_, data) => callback(data))
 });
 electron.contextBridge.exposeInMainWorld("ipcRenderer", {
   on(...args) {

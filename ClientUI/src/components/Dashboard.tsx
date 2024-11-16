@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { FaUser, FaHistory, FaCog, FaLock, FaUserCog, FaChartLine, FaUsers, FaClipboardList, FaExclamationCircle, FaArrowLeft, FaPlus, FaEdit } from 'react-icons/fa';
+import { FaUser, FaHistory, FaDownload, FaCog, FaLock, FaUserCog, FaChartLine, FaUsers, FaClipboardList, FaExclamationCircle, FaArrowLeft, FaPlus, FaEdit } from 'react-icons/fa';
 import CONFIG from '../config/config';
+import JSZip from 'jszip';
 
 interface Contributor {
   username: string;
@@ -11,11 +12,12 @@ interface Contributor {
 
 interface DashboardProps {
   token: string;
-  currentProject: string;
-  setCurrentProject: (projectUuid: string) => void;
+  currentProject: Project;
+  setCurrentProject: (project: Project | null) => void;
+  setContribScreen: (value: boolean) => void;
 }
 
-const Dashboard: React.FC<DashboardProps> = ({ token, currentProject, setCurrentProject }) => {
+const Dashboard: React.FC<DashboardProps> = ({ token, currentProject, setCurrentProject, setContribScreen }) => {
   const [projectName, setProjectName] = useState('');
   const [collaboratorsCount, setCollaboratorsCount] = useState(0);
   const [modelAccuracy, setModelAccuracy] = useState('');
@@ -96,7 +98,24 @@ const Dashboard: React.FC<DashboardProps> = ({ token, currentProject, setCurrent
       console.error('Error searching for users:', error);
     }
   };
-
+  const handleDownloadModel = async () => {
+    try {
+      const response = await axios.get(`${CONFIG.BACKEND_URI}/project/${projectName}/model`, {
+        headers: { Authorization: `Bearer ${token}` },
+        responseType: 'blob'
+      });
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'model.zip');
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    } catch (error) {
+      console.error('Error downloading model:', error);
+      alert('Error downloading model');
+    }
+  };
   const handleAddContributor = async (username: string) => {
     try {
       await axios.post(`${CONFIG.BACKEND_URI}/project/${projectName}/collaborators`, { username, projectName }, {
@@ -130,6 +149,18 @@ const Dashboard: React.FC<DashboardProps> = ({ token, currentProject, setCurrent
     }
   };
 
+  const handleTestModel = async () => {
+    try {
+      const response = await axios.post(`${CONFIG.BACKEND_URI}/project/${projectName}/test-model`, { temp : "TEMP" }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      alert(`Model tested successfully! Accuracy: ${response.data.accuracy}`);
+    } catch (error) {
+      console.error('Error testing model:', error);
+      alert('Error testing model');
+    }
+  };
+
   const handleEditProject = async () => {
     try {
       await axios.put(`${CONFIG.BACKEND_URI}/project/${currentProject}`, editProjectDetails, {
@@ -159,6 +190,42 @@ const Dashboard: React.FC<DashboardProps> = ({ token, currentProject, setCurrent
     } catch (error) {
       console.error('Error updating project:', error);
     }
+  };
+
+  const handleAddTestFiles = async () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.webkitdirectory = true;
+    input.directory = true;
+    input.multiple = true;
+    input.onchange = async (e: any) => {
+      const files = e.target.files;
+      const formData = new FormData();
+
+  
+      const zip = new JSZip();
+      const folder = zip.folder('test_set');
+      for (let i = 0; i < files.length; i++) {
+        const relativePath = files[i].webkitRelativePath.replace(/^test_set\//, '');
+        folder.file(relativePath, files[i]);
+      }
+      const content = await zip.generateAsync({ type: 'blob' });
+      formData.append('testSetZip', content, 'test_set.zip');
+  
+      try {
+        await axios.post(`${CONFIG.BACKEND_URI}/project/${projectName}/test-file`, formData, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'multipart/form-data'
+          },
+        });
+        alert('Test files uploaded successfully!');
+      } catch (error) {
+        console.error('Error uploading test files:', error);
+        alert('Error uploading test files');
+      }
+    };
+    input.click();
   };
 
   return (
@@ -200,14 +267,21 @@ const Dashboard: React.FC<DashboardProps> = ({ token, currentProject, setCurrent
 
         {/* Project Description */}
         <div className="card bg-base-100 shadow-xl">
-          <div className="card-body">
-            <h2 className="card-title">Project Description</h2>
-            <p>{description}</p>
-            <div className="card-actions justify-end">
-              <button className="btn btn-primary">Contribute Now</button>
-            </div>
-          </div>
-        </div>
+  <div className="card-body">
+    <h2 className="card-title">Project Description</h2>
+    <p>{description}</p>
+    <div className="card-actions justify-end">
+      <button className="btn btn-primary" onClick={() => setContribScreen(true)} >Contribute Now</button>
+      <button className="btn btn-secondary" onClick={handleAddTestFiles}>
+        Add Test Files
+      </button>
+      <button className="btn btn-secondary" onClick={handleDownloadModel}>
+        <FaDownload className="mr-2" />
+        Download Model
+      </button>
+    </div>
+  </div>
+</div>
 
         {/* Current Contributors */}
         <div className="card bg-base-100 shadow-xl">
@@ -242,7 +316,16 @@ const Dashboard: React.FC<DashboardProps> = ({ token, currentProject, setCurrent
             )}
           </div>
         </div>
-
+<div className="card bg-base-100 shadow-xl">
+  <div className="card-body">
+    <h2 className="card-title">Test Model</h2>
+    <div className="card-actions justify-end">
+      <button className="btn btn-primary" onClick={handleTestModel}>
+        Test Now
+      </button>
+    </div>
+  </div>
+</div>
         {/* History */}
         <div className="card bg-base-100 shadow-xl md:col-span-2">
           <div className="card-body">
