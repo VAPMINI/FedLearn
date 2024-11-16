@@ -8,12 +8,16 @@
     "dev": "bun --hot run index.js "
   },
   "dependencies": {
+    "adm-zip": "^0.5.16",
     "axios": "^1.7.7",
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
     "express": "^4.21.1",
+    "express-fileupload": "^1.5.1",
+    "formidable": "^3.5.2",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.7.2",
+    "unzipper": "^0.12.3",
     "uuid": "^10.0.0"
   }
 }

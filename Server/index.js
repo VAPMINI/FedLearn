@@ -1,6 +1,11 @@
 const express = require('express')
 const app = express()
-
+const fileUpload = require('express-fileupload');
+app.use(fileUpload({
+    limits: { fileSize: 1024 * 1024 * 1024 }, // 1GB limit
+    useTempFiles: true,
+    tempFileDir: '/tmp/'
+  }));
 const cors = require('cors')
 app.use(cors())
 app.use(express.json())

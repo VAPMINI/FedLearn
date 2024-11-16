@@ -6,7 +6,11 @@ const {
     getAllProjects,
     updateProject,
     addCollaborator,
-    uploadTestFile
+    uploadTestFile,
+    getModel,
+    testModel,
+    contribute,
+    getJson
 } = require('../controllers/projectController'); 
 const { fuzzyFindUsernames } = require('../controllers/userController');
 
@@ -22,8 +26,18 @@ router.put('/:projectId', authMiddleware, updateProject);
 
 router.post('/:projectId/collaborators', authMiddleware, addCollaborator);
 
-router.post('/:projectId/test-file', authMiddleware, uploadTestFile);
+router.post('/:projectName/test-file', authMiddleware, uploadTestFile);
 
 router.get('/search/:query', authMiddleware, fuzzyFindUsernames);
+
+router.get('/:projectName/model', authMiddleware, getModel);
+
+router.post('/:projectName/test-model', authMiddleware, testModel);
+
+router.post('/:projectName/contribute', authMiddleware, contribute);
+
+router.get('/:projectName/json', authMiddleware, getJson);
+
+
 
 module.exports = router;

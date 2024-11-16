@@ -6,11 +6,7 @@ const ContributionSchema = new mongoose.Schema({
   user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   date: { type: Date, default: Date.now },
   uuid: { type: String, default: uuidv4, unique: true },
-  status: { 
-    type: String, 
-    enum: ['pending', 'accepted', 'rejected'], 
-    default: 'pending' 
-  },
+  hash: {type: String, required: true},
 });
 
 const Contribution = mongoose.model('Contribution', ContributionSchema);
