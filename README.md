@@ -16,3 +16,5 @@ The backend, powered by Express.js and MongoDB, receives these trained models fr
 
 ## Demo
 
+https://github.com/user-attachments/assets/8649f5e7-4a32-47de-88a4-2ccfca5cc712
+
